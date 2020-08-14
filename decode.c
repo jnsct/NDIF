@@ -3,53 +3,76 @@
 #include "libbmp.h"
 #include "libbmp.c"
 
-void readFile(char* fileName, int* xOut, int* yOut){
-	int X;
-	int Y;
-	int xSz;
-	int ySz;
+struct info{
+	int X, Y; // Size of X and Y (resolution)
+	int* xArr;
+	int* yArr; // Nonogram values of X and Y
+};
+
+typedef struct info Struct;
+
+Struct readFile(char* fileName){
+	Struct s;
+	s.X = 0;
+	s.Y = 0;
 	FILE *inPtr;
 	inPtr = fopen(fileName, "r");
 	if (inPtr == NULL){
-		printf("ERROR: FILE NOT FOUND");
-		return;
+		printf("ERROR: FILE NOT FOUND\n");
+		return s;
 	}
+	int tempX = (int) fgetc(inPtr) - '0';
+	int tempY = (int) fgetc(inPtr) - '0';
 
-
-	xSz = (int) fgetc(inPtr) - '0';
-	ySz = (int) fgetc(inPtr) - '0';
-
-	for(int i = 0; i < xSz+ySz; i++){
-		if(i < xSz){
-			X += (fgetc(inPtr) - '0') * ((int) pow(10, (xSz - i - 1)));
+	for(int i = 0; i < tempX+tempY; i++){
+		if(i < tempX){
+			s.X += (fgetc(inPtr) - '0') * ((int) pow(10, (tempX - i - 1)));
 		}
 		else{
-			Y += (fgetc(inPtr) - '0') * ((int) pow(10, (ySz - i - 1 + xSz)));
+			s.Y += (fgetc(inPtr) - '0') * ((int) pow(10, (tempY - i - 1 + tempX)));
 		}
 	}
-	printf("Resolution is %ix%i\n", X, Y);
+	s.xArr = malloc(s.X * sizeof(int));
+	s.yArr = malloc((200)* sizeof(int));
 
-	int EOFCheck = 1;
+	int EOFCheck = 0;
+	int EOA = 0; //end of array
 	int num;
-	int i = 0;
+	int n = 0;
+	int* subArr = malloc((200)* sizeof(int));
 	fgetc(inPtr);
-	while(EOFCheck){
+	while(!EOFCheck){
 		num = (int) fgetc(inPtr) - '0';
-		printf("%i\n", num);
 		if(num == -38){
-			i++;
+			n++;
 		}
 		else if(num == -49){
-			EOFCheck = 0;
+			EOFCheck = 1;
 		}
-		else if(i < X){
-//TODO figure out how to handle these arrays (variable size array?)
-			//xOut[i] = num;
+		else if(num == -4){
+			if(n < s.X){
+				subArr[0] = s.xArr[n-1];
+			}
+			else{
+				//Figure out why it only works with n-8 (2^3?)
+				subArr[0] = s.yArr[n-8];
+			}
+			int i = 1;
+			while(num != -38){
+				num = (int) fgetc(inPtr) - '0';
+				subArr[i] = num;
+				num = (int) fgetc(inPtr) - '0';
+				printf("%i,%i, num is %i\n",subArr[0],subArr[1], num);
+			}
+		}
+		else if(n < s.X){
+			s.xArr[n] = num;
 		}
 		else{
-			//yOut[i] = num;
+			s.yArr[n - s.X] = num;
 		}
 	}
+	return s;
 
 }
 
@@ -67,8 +90,19 @@ void certainCells(int in[], int size, int out[], int c){
 
 
 int main() {
-	int* X;
-	int* Y;
 
-	readFile("/home/john/CLionProjects/NDIF/input.txt",X,Y);
+	Struct s;
+
+	s = readFile("/home/john/CLionProjects/NDIF/input.txt");
+
+	printf("Resolution is %ix%i\n", s.X, s.Y);
+
+
+	for(int i = 0; i < s.X; i++){
+		printf("%i ", s.xArr[i]);
+	}
+	printf("\n");
+	for(int i = 0; i < s.Y; i++){
+		printf("%i ", s.yArr[i]);
+	}
 }
