@@ -1,2 +1,2 @@
-# NDIF
-A simple program made to decode instructional files into images, using a method similar to how nonograms are decoded. Mostly created in order to teach myself C.
+# NDIF(Nonogram Driven Image Format)
+A program made to encode and decode images, using a method similar to nonograms.
